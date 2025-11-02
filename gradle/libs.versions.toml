@@ -10,6 +10,7 @@ activityCompose = "1.11.0"
 composeBom = "2025.09.01"
 firebase-bom = "34.3.0"
 firebaseCommonKtx = "22.0.1"
+sceneview ="2.3.0"
 
 
 [libraries]
@@ -29,7 +30,7 @@ androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 
-
+sceneview = { module = "io.github.sceneview:sceneview", version.ref = "sceneview" }
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom" }
 firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics-ktx" }
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth-ktx" }

@@ -32,7 +32,6 @@ fun PantallaRAModelos(
 
     val scope = rememberCoroutineScope()
     val uid = remember { FirebaseAuth.getInstance().currentUser?.uid }
-
     var favoriteIds by remember { mutableStateOf(setOf<String>()) }
 
     LaunchedEffect(style, categoryId) {
@@ -80,8 +79,16 @@ fun PantallaRAModelos(
         errorMsg = errorMsg,
         onBack = { nav.popBackStack() },
         onSelectModelo = { modelo ->
-            val encoded = Uri.encode(modelo.modelUrl)
-            nav.navigate("arviewer?modelUrl=$encoded")
+            // Usamos un modelo local en assets. Ajusta esta heurística a tu estructura si lo deseas.
+            val pathEnAssets = when {
+                // si ya viene una ruta relativa dentro de assets
+                modelo.modelUrl.startsWith("modelos/") -> modelo.modelUrl
+                // fallback seguro (asegúrate de que exista en assets/modelos/)
+                else -> "modelos/Astronaut.glb"
+            }
+            // IMPORTANTE: codificar para que los '/' no rompan la ruta de navegación
+            val encoded = Uri.encode(pathEnAssets)
+            nav.navigate("visualizacion/$encoded")
         },
         onToggleFavorite = { producto -> toggleFavorite(producto) },
         onHome = {

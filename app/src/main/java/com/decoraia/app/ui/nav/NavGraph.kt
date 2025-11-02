@@ -25,15 +25,10 @@ fun AppNavGraph(navController: NavHostController) {
         composable("chatguardados") { PantallaChatGuardados(navController) }
 
         // ---- CHAT ----
-        // 1) Chat nuevo (sin id); la primera vez que envíes mensaje, creas la sesión
         composable("chatia") {
-            // Asegúrate que PantallaChatIA acepte chatId opcional
-            // fun PantallaChatIA(navController: NavController, chatId: String? = null)
             PantallaChatIA(navController = navController, chatId = null)
         }
 
-
-        // 2) Chat existente (con id)
         composable(
             route = "chatia/{sessionId}",
             arguments = listOf(navArgument("sessionId") { type = NavType.StringType })
@@ -56,12 +51,30 @@ fun AppNavGraph(navController: NavHostController) {
         composable("registro") { PantallaRegistro(navController) }
         composable("salidaperfil") { PantallaSalidaPerfil(navController) }
         composable("soporte") { PantallaSoporte(navController) }
-        composable("visualizacion") { PantallaVisualizacion(navController) }
 
-        // RA Estilos (sin args)
+        // --- VISUALIZACIÓN 3D (SceneView) ---
+        // 1) Visualización básica (usa modelos/sillon.glb)
+        composable("visualizacion") {
+            PantallaVisualizacion()
+        }
+
+        // 2) Visualización con parámetro (cualquier .glb dentro de assets)
+        composable(
+            route = "visualizacion/{modelPath}",
+            arguments = listOf(
+                navArgument("modelPath") {
+                    type = NavType.StringType
+                    defaultValue = "modelos/sillon.glb"
+                }
+            )
+        ) { backStackEntry ->
+            val modelPath = backStackEntry.arguments?.getString("modelPath") ?: "modelos/sillon.glb"
+            PantallaVisualizacion(modelPath = modelPath)
+        }
+
+        // --- RA ---
         composable("raestilos") { PantallaRAEstilos(navController) }
 
-        // RA Objetos (recibe estilo)
         composable(
             route = "raobjetos/{style}",
             arguments = listOf(navArgument("style") { type = NavType.StringType })
@@ -70,7 +83,6 @@ fun AppNavGraph(navController: NavHostController) {
             PantallaRAObjetos(navController, style = style)
         }
 
-        // RA Modelos (recibe estilo + categoría)
         composable(
             route = "ramodelos/{style}/{categoryId}",
             arguments = listOf(
@@ -82,19 +94,5 @@ fun AppNavGraph(navController: NavHostController) {
             val categoryId = backStackEntry.arguments?.getString("categoryId").orEmpty()
             PantallaRAModelos(navController, style = style, categoryId = categoryId)
         }
-
-        // Visor AR opcional
-        composable(
-            route = "arviewer?modelUrl={modelUrl}",
-            arguments = listOf(
-                navArgument("modelUrl") {
-                    type = NavType.StringType
-                    nullable = true
-                    defaultValue = null
-                }
-            )
-        ) {
-            PantallaVisualizacion(navController)
-            }
-        }
+    }
 }
