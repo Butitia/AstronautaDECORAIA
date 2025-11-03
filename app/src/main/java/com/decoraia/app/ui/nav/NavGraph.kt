@@ -24,11 +24,8 @@ fun AppNavGraph(navController: NavHostController) {
         // Historial
         composable("chatguardados") { PantallaChatGuardados(navController) }
 
-        // ---- CHAT ----
-        composable("chatia") {
-            PantallaChatIA(navController = navController, chatId = null)
-        }
-
+        // Chat
+        composable("chatia") { PantallaChatIA(navController = navController, chatId = null) }
         composable(
             route = "chatia/{sessionId}",
             arguments = listOf(navArgument("sessionId") { type = NavType.StringType })
@@ -36,7 +33,6 @@ fun AppNavGraph(navController: NavHostController) {
             val sessionId = backStackEntry.arguments?.getString("sessionId")!!
             PantallaChatIA(navController = navController, chatId = sessionId)
         }
-        // ---- FIN CHAT ----
 
         composable("configuracion") { PantallaConfiguracion(navController) }
         composable("descripcion") { PantallaDescripcion(navController) }
@@ -52,29 +48,39 @@ fun AppNavGraph(navController: NavHostController) {
         composable("salidaperfil") { PantallaSalidaPerfil(navController) }
         composable("soporte") { PantallaSoporte(navController) }
 
-        // --- VISUALIZACIÓN 3D (SceneView) ---
-        // 1) Visualización básica (usa modelos/sillon.glb)
-        composable("visualizacion") {
-            PantallaVisualizacion()
-        }
+        // --- Visualización 3D ---
+        composable("visualizacion") { PantallaVisualizacion() }
 
-        // 2) Visualización con parámetro (cualquier .glb dentro de assets)
+        // Ruta genérica con path (decodificar es clave)
         composable(
             route = "visualizacion/{modelPath}",
             arguments = listOf(
                 navArgument("modelPath") {
                     type = NavType.StringType
-                    defaultValue = "modelos/sillon.glb"
+                    defaultValue = "modelos/jarron1.glb"
                 }
             )
         ) { backStackEntry ->
-            val modelPath = backStackEntry.arguments?.getString("modelPath") ?: "modelos/sillon.glb"
-            PantallaVisualizacion(modelPath = modelPath)
+            val raw = backStackEntry.arguments?.getString("modelPath") ?: "modelos/jarron1.glb"
+            val decoded = Uri.decode(raw)
+            PantallaVisualizacion(modelPath = decoded)
+        }
+
+        // Rutas fijas para los 16 modelos
+        val modelos3D = listOf(
+            "jarron1","jarron2","jarron3","jarron4",
+            "lampara1","lampara2","lampara3","lampara4",
+            "cuadro1","cuadro2","cuadro3","cuadro4",
+            "sofa1","sofa2","sofa3","sofa4"
+        )
+        modelos3D.forEach { nombre ->
+            composable("visualizacion/$nombre") {
+                PantallaVisualizacion(modelPath = "modelos/$nombre.glb")
+            }
         }
 
         // --- RA ---
         composable("raestilos") { PantallaRAEstilos(navController) }
-
         composable(
             route = "raobjetos/{style}",
             arguments = listOf(navArgument("style") { type = NavType.StringType })
@@ -82,7 +88,6 @@ fun AppNavGraph(navController: NavHostController) {
             val style = Uri.decode(backStackEntry.arguments?.getString("style").orEmpty())
             PantallaRAObjetos(navController, style = style)
         }
-
         composable(
             route = "ramodelos/{style}/{categoryId}",
             arguments = listOf(

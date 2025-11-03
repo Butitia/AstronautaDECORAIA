@@ -1,6 +1,5 @@
 ﻿package com.decoraia.app.ui.screens
 
-import android.net.Uri
 import androidx.compose.runtime.*
 import androidx.navigation.NavHostController
 import com.decoraia.app.data.ProductoAR
@@ -34,11 +33,13 @@ fun PantallaRAModelos(
     val uid = remember { FirebaseAuth.getInstance().currentUser?.uid }
     var favoriteIds by remember { mutableStateOf(setOf<String>()) }
 
+    // ---- Carga desde el repositorio: conserva imágenes y limita a 4 ----
     LaunchedEffect(style, categoryId) {
         loading = true
         errorMsg = null
         try {
-            modelos = productRepo.loadBy(style = style, typeValue = categoria.typeValue)
+            val todos = productRepo.loadBy(style = style, typeValue = categoria.typeValue)
+            modelos = todos.take(4)   // <= muestra solo 4, manteniendo thumbnails del repo
         } catch (e: Exception) {
             errorMsg = e.message
             modelos = emptyList()
@@ -52,23 +53,26 @@ fun PantallaRAModelos(
             errorMsg = "Debes iniciar sesión para gestionar favoritos."
             return@LaunchedEffect
         }
-        favRepo.listenFavoritosIds(uid).collectLatest { ids ->
-            favoriteIds = ids
-        }
+        favRepo.listenFavoritosIds(uid).collectLatest { ids -> favoriteIds = ids }
     }
 
     fun toggleFavorite(item: ProductoAR) {
         val currentUid = uid ?: return
         scope.launch {
-            try {
-                if (favoriteIds.contains(item.id)) {
-                    favRepo.removeFavorito(currentUid, item.id)
-                } else {
-                    favRepo.addFavorito(currentUid, item)
-                }
-            } catch (_: Exception) {
+            runCatching {
+                if (favoriteIds.contains(item.id)) favRepo.removeFavorito(currentUid, item.id)
+                else favRepo.addFavorito(currentUid, item)
             }
         }
+    }
+
+    // Mapea índice a nombre de ruta (para tus 16 modelos locales)
+    fun routeNameFor(categoryId: String, index: Int): String = when (categoryId.lowercase()) {
+        "jarrones" -> "jarron${index + 1}"
+        "lamparas" -> "lampara${index + 1}"
+        "cuadros"  -> "cuadro${index + 1}"
+        "sofas"    -> "sofa${index + 1}"
+        else       -> "jarron1" // fallback
     }
 
     RAModelosScreenUI(
@@ -78,24 +82,16 @@ fun PantallaRAModelos(
         favoriteIds = favoriteIds,
         errorMsg = errorMsg,
         onBack = { nav.popBackStack() },
+
         onSelectModelo = { modelo ->
-            // Usamos un modelo local en assets. Ajusta esta heurística a tu estructura si lo deseas.
-            val pathEnAssets = when {
-                // si ya viene una ruta relativa dentro de assets
-                modelo.modelUrl.startsWith("modelos/") -> modelo.modelUrl
-                // fallback seguro (asegúrate de que exista en assets/modelos/)
-                else -> "modelos/Astronaut.glb"
-            }
-            // IMPORTANTE: codificar para que los '/' no rompan la ruta de navegación
-            val encoded = Uri.encode(pathEnAssets)
-            nav.navigate("visualizacion/$encoded")
+            // Calcula la ruta por posición (0..3) para abrir tu glb local correspondiente
+            val idx = modelos.indexOf(modelo).coerceIn(0, 3)
+            val route = routeNameFor(categoria.id, idx)
+            nav.navigate("visualizacion/$route")
         },
+
         onToggleFavorite = { producto -> toggleFavorite(producto) },
-        onHome = {
-            nav.navigate("principal") {
-                popUpTo("principal") { inclusive = true }
-            }
-        },
+        onHome = { nav.navigate("principal") { popUpTo("principal") { inclusive = true } } },
         onProfile = { nav.navigate("perfil") }
     )
 }
